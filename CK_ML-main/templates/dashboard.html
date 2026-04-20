@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Tracking System - Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 5px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+            transition: color 0.3s;
+        }
+
+        .stat-number.updated {
+            color: #28a745;
+        }
+
+        .stat-label {
+            font-size: 1em;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 15px;
+        }
+
+        .section h2 {
+            margin-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 8px;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th,
+        .table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .table th {
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+
+        .table tr:hover {
+            background: #f5f5f5;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .status-present {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-unknown {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+
+        .btn:hover {
+            background: #5a6fd8;
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 15px;
+            color: #666;
+        }
+
+        .error,
+        .success,
+        .info {
+            padding: 12px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .timestamp {
+            font-size: 0.9em;
+            color: #666;
+            text-align: right;
+            margin-top: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .form-group input[type="text"] {
+            padding: 10px;
+            width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .image-upload-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        .image-upload-item input[type="file"] {
+            width: 100%;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .switch input {
+            display: none;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            inset: 0;
+            background: #ccc;
+            transition: 0.3s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            content: "";
+            position: absolute;
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+
+        input:checked+.slider {
+            background: #4CAF50;
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(26px);
+        }
+
+        .inactive-track {
+            opacity: 0.6;
+            transition: opacity 0.3s;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>🎯 Face Tracking System</h1>
+        <p>Hệ thống nhận diện và theo dõi người trong phòng</p>
+    </div>
+
+    <div class="container">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" id="total-persons">-</div>
+                <div class="stat-label">Tổng số người</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="active-people">-</div>
+                <div class="stat-label">Đang hiện diện</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="total-attendances">-</div>
+                <div class="stat-label">Tổng lượt vào/ra</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="total-devices">-</div>
+                <div class="stat-label">Thiết bị</div>
+            </div>
+        </div>
+
+        <div style="display:flex; gap:10px; justify-content:center; margin-bottom:20px; flex-wrap:wrap;">
+            <button class="btn" id="refresh-btn">🔄 Làm mới tất cả dữ liệu</button>
+            <button class="btn" style="background:#198754;" id="export-excel-btn">📄 Xuất báo cáo (Excel)</button>
+            <button class="btn" style="background:#dc3545;" id="checkout-all-btn">⏱️ Check-out tất cả</button>
+        </div>
+
+        <div class="section">
+            <h2>👥 Người đang hiện diện</h2>
+            <div id="active-tracks-content">
+                <div class="loading">Đang tải...</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📋 Lịch sử vào/ra gần đây</h2>
+            <div id="attendance-content">
+                <div class="loading">Đang tải...</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📊 Thống kê hôm nay</h2>
+            <div id="daily-stats-content">
+                <div class="loading">Đang tải...</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>➕ Đăng ký người mới</h2>
+            <form id="register-form">
+                <div class="form-group">
+                    <label for="reg-name">Tên người:</label>
+                    <input type="text" id="reg-name" placeholder="Nhập tên người" required />
+                </div>
+
+                <div class="form-group">
+                    <label>Chọn ảnh (tối đa 3 ảnh):</label>
+                    <div class="image-upload-grid">
+                        <div class="image-upload-item">
+                            <label for="img1">Ảnh 1 (chính diện):</label>
+                            <input type="file" id="img1" accept="image/*" />
+                        </div>
+                        <div class="image-upload-item">
+                            <label for="img2">Ảnh 2 (nghiêng trái):</label>
+                            <input type="file" id="img2" accept="image/*" />
+                        </div>
+                        <div class="image-upload-item">
+                            <label for="img3">Ảnh 3 (nghiêng phải):</label>
+                            <input type="file" id="img3" accept="image/*" />
+                        </div>
+                    </div>
+                </div>
+
+                <div style="text-align: center;">
+                    <button class="btn" type="submit">📸 Đăng ký người mới</button>
+                </div>
+            </form>
+            <div id="register-result"></div>
+        </div>
+
+        <div class="timestamp">Cập nhật lần cuối: <span id="last-update">-</span></div>
+    </div>
+
+    <script>
+        const API = '/api';
+        const UPDATE_INTERVAL = 200;
+        const CLEANUP_DELAY = 2500;
+
+        const state = {
+            knownTracks: {},
+            lastHash: '',
+            isLoading: false
+        };
+
+        const el = {
+            stats: ['total-persons', 'active-people', 'total-attendances', 'total-devices'].reduce((acc, id) => {
+                acc[id] = document.getElementById(id);
+                return acc;
+            }, {}),
+            activeTracks: document.getElementById('active-tracks-content'),
+            attendance: document.getElementById('attendance-content'),
+            dailyStats: document.getElementById('daily-stats-content'),
+            registerResult: document.getElementById('register-result'),
+            refreshBtn: document.getElementById('refresh-btn'),
+            exportExcelBtn: document.getElementById('export-excel-btn'),
+            checkoutAllBtn: document.getElementById('checkout-all-btn'),
+            lastUpdate: document.getElementById('last-update')
+        };
+
+        // Utility functions
+        const updateStat = (elem, val) => {
+            if (elem.textContent === String(val)) return;
+            elem.textContent = val;
+            elem.classList.add('updated');
+            setTimeout(() => elem.classList.remove('updated'), 200);
+        };
+
+        const formatDuration = (min) => {
+            const h = Math.floor(min / 60);
+            const m = min % 60;
+            return h > 0 ? `${h}h ${m}m` : `${m}m`;
+        };
+
+        const showMessage = (elem, msg, type) => {
+            elem.innerHTML = `<div class="${type}">${msg}</div>`;
+        };
+
+        // Load functions
+        const loadStats = async () => {
+            try {
+                const res = await fetch(`${API}/stats`);
+                const { success, data } = await res.json();
+                if (!success) return;
+
+                const { database: db, realtime: rt = {} } = data;
+                updateStat(el.stats['total-persons'], db.total_persons || 0);
+                updateStat(el.stats['active-people'], (rt.active_people ?? db.active_attendances) || 0);
+                updateStat(el.stats['total-attendances'], db.total_attendances || 0);
+                updateStat(el.stats['total-devices'], db.total_devices || 0);
+
+                return { db, rt };
+            } catch (err) {
+                console.error('Stats error:', err);
+            }
+        };
+
+        const loadActiveTracks = async () => {
+            try {
+                const res = await fetch(`${API}/tracking/active`);
+                const { success, data } = await res.json();
+                if (!success) {
+                    el.activeTracks.innerHTML = '<div class="error">Không thể tải dữ liệu</div>';
+                    return;
+                }
+
+                const now = Date.now();
+                Object.values(state.knownTracks).forEach(t => {
+                    t.active = false;
+                    t.lastSeen = t.lastSeen || now;
+                });
+
+                data.forEach(track => {
+                    const id = track.track_id;
+                    if (!state.knownTracks[id]) {
+                        state.knownTracks[id] = {
+                            track_id: id,
+                            name: track.name,
+                            time_in: track.time_in ? new Date(track.time_in) : new Date(),
+                            duration_minutes: track.duration_minutes || 0,
+                            active: true,
+                            lastSeen: now,
+                            timeout: null
+                        };
+                    } else {
+                        const t = state.knownTracks[id];
+                        t.duration_minutes = track.duration_minutes || 0;
+                        t.active = true;
+                        t.lastSeen = now;
+                        if (t.timeout) {
+                            clearTimeout(t.timeout);
+                            t.timeout = null;
+                        }
+                    }
+                });
+
+                Object.values(state.knownTracks).forEach(t => {
+                    if (!t.active && !t.timeout) {
+                        t.timeout = setTimeout(() => {
+                            delete state.knownTracks[t.track_id];
+                            renderTracks();
+                        }, CLEANUP_DELAY);
+                    }
+                });
+
+                renderTracks();
+            } catch (err) {
+                el.activeTracks.innerHTML = '<div class="error">Lỗi khi tải dữ liệu</div>';
+                console.error('Active tracks error:', err);
+            }
+        };
+
+        const renderTracks = () => {
+            const tracks = Object.values(state.knownTracks).sort((a, b) => b.lastSeen - a.lastSeen);
+
+            if (tracks.length === 0) {
+                el.activeTracks.innerHTML = '<p>Không có người nào đang hiện diện</p>';
+                return;
+            }
+
+            const rows = tracks.map(t => `
+                <tr class="${!t.active ? 'inactive-track' : ''}">
+                    <td><strong>${t.name}</strong></td>
+                    <td>${t.track_id}</td>
+                    <td>${t.time_in.toLocaleTimeString('vi-VN')}</td>
+                    <td>${formatDuration(t.duration_minutes)}</td>
+                    <td>
+                        <label class="switch">
+                            <input type="checkbox" ${t.active ? 'checked' : ''} disabled>
+                            <span class="slider"></span>
+                        </label>
+                    </td>
+                </tr>
+            `).join('');
+
+            el.activeTracks.innerHTML = `
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Tên</th>
+                            <th>Track ID</th>
+                            <th>Thời gian vào</th>
+                            <th>Thời gian hiện diện</th>
+                            <th>Trạng thái</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            `;
+        };
+
+        const loadAttendance = async () => {
+            try {
+                const res = await fetch(`${API}/attendance?limit=20`);
+                const { success, data } = await res.json();
+
+                if (!success || !data.length) {
+                    el.attendance.innerHTML = '<p>Chưa có dữ liệu vào/ra</p>';
+                    return;
+                }
+
+                const rows = data.map(a => {
+                    const status = a.person_name === 'Unknown' ? 'status-unknown' : 'status-present';
+                    const text = a.person_name === 'Unknown' ? 'Unknown' : 'Present';
+                    return `
+                        <tr>
+                            <td>${a.person_name}</td>
+                            <td>${new Date(a.time_in).toLocaleString('vi-VN')}</td>
+                            <td>${a.time_out ? new Date(a.time_out).toLocaleString('vi-VN') : 'Đang hiện diện'}</td>
+                            <td>${formatDuration(a.duration_minutes || 0)}</td>
+                            <td><span class="status-badge ${status}">${text}</span></td>
+                        </tr>
+                    `;
+                }).join('');
+
+                el.attendance.innerHTML = `
+                    <table class="table">
+                        <thead>
+                            <tr><th>Tên</th><th>Thời gian vào</th><th>Thời gian ra</th><th>Thời lượng</th><th>Trạng thái</th></tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                `;
+            } catch (err) {
+                el.attendance.innerHTML = '<div class="error">Lỗi khi tải dữ liệu</div>';
+                console.error('Attendance error:', err);
+            }
+        };
+
+        const loadDailyStats = async () => {
+            try {
+                const res = await fetch(`${API}/attendance/stats`);
+                const { success, data: s } = await res.json();
+
+                if (!success) {
+                    el.dailyStats.innerHTML = '<p>Không có thống kê hôm nay</p>';
+                    return;
+                }
+
+                el.dailyStats.innerHTML = `
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;">
+                        <div class="stat-card">
+                            <div class="stat-number">${s.total_checkins || 0}</div>
+                            <div>Tổng lượt vào</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">${s.completed_sessions || 0}</div>
+                            <div>Phiên hoàn thành</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">${s.ongoing_sessions || 0}</div>
+                            <div>Đang diễn ra</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">${s.unknown_people || 0}</div>
+                            <div>Người chưa biết</div>
+                        </div>
+                    </div>
+                `;
+            } catch (err) {
+                el.dailyStats.innerHTML = '<div class="error">Lỗi khi tải thống kê</div>';
+                console.error('Daily stats error:', err);
+            }
+        };
+
+        const loadAll = async () => {
+            if (state.isLoading) return;
+            state.isLoading = true;
+
+            try {
+                await Promise.all([loadStats(), loadActiveTracks(), loadAttendance(), loadDailyStats()]);
+                el.lastUpdate.textContent = new Date().toLocaleTimeString('vi-VN');
+            } finally {
+                state.isLoading = false;
+                el.refreshBtn.disabled = false;
+            }
+        };
+
+        const checkUpdates = async () => {
+            if (state.isLoading) return;
+
+            try {
+                const res = await fetch(`${API}/stats`);
+                const { success, data } = await res.json();
+                if (!success) return;
+
+                const hash = JSON.stringify({
+                    total: data.database.total_persons,
+                    active: data.realtime?.active_people ?? data.database.active_attendances,
+                    attendance: data.database.total_attendances,
+                    ts: data.realtime?.timestamp || Date.now()
+                });
+
+                if (hash !== state.lastHash) {
+                    console.log('🔔 Dữ liệu mới');
+                    state.lastHash = hash;
+                    loadAll();
+                }
+            } catch (err) {
+                console.error('Check updates error:', err);
+            }
+        };
+
+        // Registration
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const name = document.getElementById('reg-name').value.trim();
+            const files = ['img1', 'img2', 'img3']
+                .map(id => document.getElementById(id).files[0])
+                .filter(Boolean);
+
+            if (!name) {
+                showMessage(el.registerResult, 'Tên là bắt buộc', 'error');
+                return;
+            }
+
+            if (!files.length) {
+                showMessage(el.registerResult, 'Vui lòng chọn ít nhất 1 ảnh', 'error');
+                return;
+            }
+
+            showMessage(el.registerResult, 'Đang xử lý...', 'info');
+
+            const formData = new FormData();
+            formData.append('name', name);
+            files.forEach(f => formData.append('images', f));
+
+            try {
+                const res = await fetch('/api/persons/register', { method: 'POST', body: formData });
+                const { success, data, error } = await res.json();
+
+                if (success) {
+                    showMessage(el.registerResult,
+                        `✅ Đăng ký thành công!<br>
+                        <strong>Tên:</strong> ${data.name}<br>
+                        <strong>ID:</strong> ${data.person_id}<br>
+                        <strong>Ảnh:</strong> ${data.saved_files.length}<br>
+                        <strong>Encodings:</strong> ${data.encodings_count}`,
+                        'success'
+                    );
+
+                    e.target.reset();
+
+                    await fetch('/api/face-recognition/reload', { method: 'POST' });
+                    loadAll();
+                } else {
+                    showMessage(el.registerResult, `❌ Lỗi: ${error}`, 'error');
+                }
+            } catch (err) {
+                showMessage(el.registerResult, `❌ Lỗi: ${err.message}`, 'error');
+            }
+        });
+
+        el.refreshBtn.addEventListener('click', async () => {
+            if (!confirm('Bạn có muốn làm mới lại dữ liệu hay không?')) {
+                return;
+            }
+            el.refreshBtn.disabled = true;
+            try {
+                const res = await fetch(`${API}/attendance/clear`, { method: 'POST' });
+                const { success, data, error } = await res.json();
+                if (success) {
+                    showMessage(el.attendance, `✅ Đã xoá ${data?.deleted || 0} bản ghi.`, 'success');
+                } else {
+                    showMessage(el.attendance, `❌ Không thể xoá lịch sử: ${error}`, 'error');
+                }
+                state.lastHash = '';
+                await loadAll();
+            } catch (err) {
+                showMessage(el.attendance, `❌ Lỗi xoá lịch sử: ${err.message}`, 'error');
+            } finally {
+                el.refreshBtn.disabled = false;
+            }
+        });
+
+        el.exportExcelBtn.addEventListener('click', () => {
+            try {
+                const url = `${API}/export/attendance?format=excel`;
+                window.open(url, '_blank');
+            } catch (err) {
+                showMessage(el.attendance, `❌ Không thể xuất báo cáo: ${err.message}`, 'error');
+            }
+        });
+
+        el.checkoutAllBtn.addEventListener('click', async () => {
+            el.checkoutAllBtn.disabled = true;
+            try {
+                const res = await fetch(`${API}/attendance/checkout-all`, { method: 'POST' });
+                const { success, error, data } = await res.json();
+                if (success) {
+                    showMessage(el.attendance, `✅ Đã checkout ${data?.checked_out || 0} người.`, 'success');
+                    await loadAll();
+                } else {
+                    showMessage(el.attendance, `❌ Lỗi checkout tất cả: ${error}`, 'error');
+                }
+            } catch (err) {
+                showMessage(el.attendance, `❌ Lỗi checkout tất cả: ${err.message}`, 'error');
+            } finally {
+                el.checkoutAllBtn.disabled = false;
+            }
+        });
+
+        // Initialize
+        loadAll();
+        setInterval(checkUpdates, UPDATE_INTERVAL);
+    </script>
+</body>
+
+</html>
